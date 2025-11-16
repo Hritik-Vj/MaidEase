@@ -4,13 +4,14 @@ from app.core.config import settings
 from app.api.v1 import auth, users, maids, bookings, reviews
 from app.database import engine, Base
 
-# Import all models before creating tables
+# Import all models
 from app.models.user import User
 from app.models.booking import Booking
 from app.models.review import Review
+import logging
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# Note: Database tables are managed via Supabase SQL scripts (database/init.sql)
+# Tables are pre-created and should NOT be auto-created here to avoid conflicts
 
 app = FastAPI(
     title=settings.APP_NAME,
