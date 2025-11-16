@@ -1,7 +1,15 @@
 import axios from 'axios';
 
-// Use environment variable for API URL, fallback to localhost
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+// Determine API URL - production or development
+let API_URL;
+
+// In production (Vercel), use Render backend
+if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+  API_URL = 'https://maidease-api.onrender.com/api/v1';
+} else {
+  // Development or env variable fallback
+  API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+}
 
 // Log the API URL being used (helpful for debugging)
 console.log('🔗 API URL:', API_URL);
@@ -9,6 +17,7 @@ console.log('📦 Environment:', {
   VITE_API_URL: import.meta.env.VITE_API_URL,
   MODE: import.meta.env.MODE,
   DEV: import.meta.env.DEV,
+  HOSTNAME: typeof window !== 'undefined' ? window.location.hostname : 'N/A',
 });
 
 const api = axios.create({
