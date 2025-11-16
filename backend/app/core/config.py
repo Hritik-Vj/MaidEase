@@ -1,6 +1,9 @@
 from pydantic_settings import BaseSettings
 from typing import List
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -16,10 +19,11 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # CORS - allow both localhost and production URLs
+    # CORS - allow production and local URLs
     BACKEND_CORS_ORIGINS: List[str] = [
-        "http://localhost:5173",
-        "http://localhost:3000",
+        "https://maidease-two.vercel.app",
+        "http://localhost:5173",  # For local development
+        "http://localhost:3000",   # For local development
     ]
     
     class Config:
@@ -32,4 +36,11 @@ settings = Settings()
 # Load CORS origins from environment if set
 cors_env = os.getenv("CORS_ORIGINS", "")
 if cors_env:
-    settings.BACKEND_CORS_ORIGINS = [url.strip() for url in cors_env.split(",")]
+    # Handle both comma-separated and single values
+    cors_urls = [url.strip() for url in cors_env.split(",") if url.strip()]
+    settings.BACKEND_CORS_ORIGINS = cors_urls
+    logger.info(f"Loaded CORS origins from environment: {cors_urls}")
+else:
+    logger.warning("CORS_ORIGINS environment variable not set, using defaults")
+
+logger.info(f"Final CORS origins: {settings.BACKEND_CORS_ORIGINS}")
