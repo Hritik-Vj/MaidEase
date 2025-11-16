@@ -10,6 +10,9 @@ from app.core.security import (
     create_refresh_token,
     decode_refresh_token
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -18,11 +21,14 @@ class AuthService:
     
     def register_user(self, user_data: UserCreate) -> User:
         # Check if user already exists
+        logger.info(f"🔐 Checking if user exists: {user_data.email}")
         existing_user = self.db.query(User).filter(User.email == user_data.email).first()
         if existing_user:
+            logger.warning(f"⚠️ User already exists: {user_data.email}")
             raise ValueError("Email already registered")
         
         # Create new user
+        logger.info(f"🔐 Creating new user: {user_data.email}, role={user_data.role}")
         hashed_password = get_password_hash(user_data.password)
         db_user = User(
             email=user_data.email,
@@ -32,9 +38,11 @@ class AuthService:
             role=user_data.role
         )
         
+        logger.info(f"💾 Saving user to database: {user_data.email}")
         self.db.add(db_user)
         self.db.commit()
         self.db.refresh(db_user)
+        logger.info(f"✅ User registered successfully: {db_user.id} ({user_data.email})")
         
         return db_user
     

@@ -7,6 +7,9 @@ from app.schemas.user import UserCreate, UserResponse
 from app.schemas.token import Token, TokenRefresh
 from app.services.auth_service import AuthService
 from app.core.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -17,11 +20,17 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     Register a new user (Customer or Maid)
     """
     try:
+        logger.info(f"🔐 Registration attempt: email={user_data.email}, role={user_data.role}")
         auth_service = AuthService(db)
         user = auth_service.register_user(user_data)
+        logger.info(f"✅ Registration successful: user_id={user.id}, email={user.email}")
         return user
     except ValueError as e:
+        logger.error(f"❌ Registration error: {str(e)}")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        logger.error(f"❌ Unexpected error during registration: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Registration failed")
 
 
 @router.post("/login", response_model=Token)

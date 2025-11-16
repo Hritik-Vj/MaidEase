@@ -22,6 +22,7 @@ console.log('📦 Environment:', {
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 30000, // 30 second timeout
 });
 
 // Token management
@@ -51,13 +52,33 @@ api.interceptors.request.use((config) => {
   if (!(config.data instanceof FormData)) {
     config.headers['Content-Type'] = 'application/json';
   }
+  console.log('📤 API Request:', {
+    method: config.method.toUpperCase(),
+    url: config.url,
+    headers: config.headers,
+    data: config.data,
+  });
   return config;
 });
 
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ API Response Success:', {
+      url: response.config.url,
+      status: response.status,
+      data: response.data,
+    });
+    return response;
+  },
   async (error) => {
+    console.error('❌ API Response Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.message,
+      data: error.response?.data,
+    });
+    
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -78,6 +99,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return api(originalRequest);
       } catch (refreshError) {
+        console.error('🔄 Token refresh failed:', refreshError);
         clearTokens();
         window.location.href = '/login';
         return Promise.reject(refreshError);
